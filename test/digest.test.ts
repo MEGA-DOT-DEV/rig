@@ -23,6 +23,18 @@ describe('run log reader', () => {
     expect(row.owner).toBe('—');
   });
 
+  it('keeps the 04:04 job whose owner is already —', () => {
+    const night = readNight('runs', '2026-10-04')!;
+    expect(night.rows).toHaveLength(6);
+    expect(night.rows.find((r) => r.job === '7f3a')).toMatchObject({
+      owner: '—',
+      runs: 1,
+      last: 'ok',
+      first: '2026-10-05T04:04:00+00:00',
+    });
+    expect(night.badLines).toBe(0);
+  });
+
   it('last status wins, retries counted on their own', () => {
     const row = readNight('runs', '2026-10-28')!.rows.find((r) => r.job === 'fixtures/refresh')!;
     expect(row.last).toBe('ok');
@@ -49,6 +61,18 @@ describe('digest routes', () => {
     expect(res.status).toBe(200);
     expect(html).toContain('a/job');
     expect(html).toContain('1 bad line(s)');
+  });
+
+  it('includes the unknown-owner job in both the page and JSON', async () => {
+    const app = createApp({ ...config, runsDir: 'runs' });
+    const page = await app.request('/digest/2026-10-04');
+    const api = await app.request('/api/digest/2026-10-04');
+    expect(page.status).toBe(200);
+    expect(api.status).toBe(200);
+    expect(await page.text()).toContain('<td>7f3a</td><td>—</td>');
+    const json = await api.json();
+    expect(json.rows).toHaveLength(6);
+    expect(json.rows.find((r: { job: string }) => r.job === '7f3a')).toMatchObject({ owner: '—' });
   });
 
   it('404s a night with no file', async () => {
