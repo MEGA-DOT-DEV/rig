@@ -9,7 +9,7 @@ function parse(line: string): RunLine | null {
   try {
     const j = JSON.parse(line);
     if (typeof j.at !== 'string' || typeof j.job !== 'string' || !STATUSES.includes(j.status)) return null;
-    return { at: j.at, job: j.job, status: j.status, owner: j.owner ?? null, error: j.error };
+    return { at: j.at, job: j.job, status: j.status, owner: typeof j.owner === 'string' ? j.owner : null, error: j.error };
   } catch {
     return null;
   }

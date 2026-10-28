@@ -32,6 +32,12 @@ describe('run log reader', () => {
   it('a night with no file is null', () => {
     expect(readNight('runs', '1999-01-01')).toBeNull();
   });
+
+  it('treats a non-string owner as missing', () => {
+    const runsDir = mkdtempSync(join(tmpdir(), 'rig-runs-'));
+    writeFileSync(join(runsDir, '2026-01-04.jsonl'), '{"at":"2026-01-04T01:00:00+01:00","job":"a/job","status":"ok","owner":7}\n');
+    expect(readNight(runsDir, '2026-01-04')!.rows[0].owner).toBe('—');
+  });
 });
 
 describe('digest routes', () => {
